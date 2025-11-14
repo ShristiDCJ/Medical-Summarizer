@@ -1,127 +1,194 @@
 # Transformer Summarizer Project
+Python
+Streamlit
+PyTorch
+License
+A web-based application built with Streamlit and PyTorch to generate concise summaries of medical transcripts using a custom-trained Transformer model. This project was developed as part of a Data Science and Machine Learning course to demonstrate natural language processing (NLP) for medical text summarization.
+Table of Contents
 
-A full-stack project that trains a custom transformer from scratch to summarize medical transcripts and exposes the model through a FastAPI backend (for Render) and a Next.js frontend (for Vercel).
+Project Overview
+Features
+Dataset
+Model Architecture
+Installation
+Usage
+Training the Model
+Project Structure
+Troubleshooting
+Future Improvements
+License
+Acknowledgments
 
-## 📚 Documentation
+Project Overview
+The Medical Transcript Summarizer is designed to assist healthcare professionals by generating brief, coherent summaries from detailed medical transcripts. The application uses a custom Transformer model trained from scratch to process medical text and produce summaries. The model is trained on the MTSamples dataset, and the web interface is built using Streamlit for ease of use.
+Key components:
 
-- **[QUICK_START.md](QUICK_START.md)** - Quick 5-minute guide to get started
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Detailed step-by-step deployment instructions for Render and Vercel
+Tokenizer: A WordPiece tokenizer trained on medical transcripts and summaries.
+Model: A Transformer with 6 encoder and 6 decoder layers, trained for summarization.
+Interface: A Streamlit app allowing users to input transcripts and view, copy, or download summaries.
 
-## Project Structure
+Features
 
-- `ml_model/` – reusable Python package with training and inference utilities.
-- `backend/` – FastAPI service that wraps the trained model behind a `/summarize` endpoint.
-- `frontend/` – Next.js application that calls the backend and provides a polished UI.
-- `mtsamples.csv` – source dataset (MTSamples).
+Text Input: Enter or paste medical transcripts via a user-friendly text area.
+Summary Generation: Produces concise summaries using a custom Transformer model.
+Interactive UI: Includes buttons to generate, clear, copy, and download summaries.
+Word Count: Displays the word count of the input transcript.
+Error Handling: Validates input and provides clear error messages for missing files or empty inputs.
+GPU Support: Accelerates inference on CUDA-enabled GPUs if available.
 
-## Training Pipeline
+Dataset
+The project uses the MTSamples dataset, which contains medical transcriptions and their corresponding summaries. The dataset is stored as mtsamples.csv with columns:
 
-1. **Create a virtual environment** and install deps:
+transcription: Full medical transcript.
+description: Brief summary (used as the target).
 
-   ```bash
-   python -m venv .venv
-   .venv\Scripts\activate  # Windows
-   pip install -r ml_model/requirements.txt
-   ```
+Preprocessing:
 
-2. **Train the tokenizer & model** (artifacts saved under `artifacts/` by default):
+Removed rows with missing transcriptions or summaries.
+Appended [SEP] tokens to summaries for consistent training.
+Tokenized using a custom WordPiece tokenizer with a vocabulary size of 30,000.
 
-   ```bash
-   python -m ml_model.train --epochs 30 --train-tokenizer
-   ```
+Model Architecture
+The summarization model is a custom Transformer implemented in PyTorch, with the following specifications:
 
-   Adjust CLI flags (`--batch-size`, `--learning-rate`, etc.) as needed. Model checkpoints and tokenizer are saved to `artifacts/model.pt` and `artifacts/tokenizer.json`.
+Tokenizer: WordPiece with special tokens ([PAD], [UNK], [CLS], [SEP], [MASK]).
+Embedding Dimension: d_model=512.
+Attention Heads: 8.
+Layers: 6 encoder layers, 6 decoder layers.
+Feedforward Dimension: 2048.
+Dropout: 0.1.
+Training: 100 epochs with Adam optimizer, cosine annealing scheduler, and label smoothing.
 
-3. **(Optional)** Track training in TensorBoard:
+The model uses positional encoding and is trained to generate summaries autoregressively, with greedy decoding for faster inference in the Streamlit app.
+Installation
+Prerequisites
 
-   ```bash
-   tensorboard --logdir runs
-   ```
+Python: 3.8 or higher.
+Operating System: Windows (tested), Linux, or macOS.
+Hardware: CUDA-enabled GPU recommended for faster inference (CPU supported).
+Dependencies:bashpip install streamlit torch tokenizers pandas rouge-score
 
-## Backend Service (Render)
+GPU Setup (Optional)
+For GPU acceleration:
 
-1. **Local development**
+Install NVIDIA CUDA Toolkit (e.g., CUDA 11.8) and cuDNN.
+Install PyTorch with CUDA support:bashpip install torch --index-url https://download.pytorch.org/whl/cu118
+Verify GPU availability:pythonimport torch
+print(torch.cuda.is_available(), torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU")
 
-   ```bash
-   cd backend
-   python -m venv .venv
-   .venv\Scripts\activate
-   pip install -r requirements.txt
-   uvicorn app.main:app --reload --port 8000
-   ```
+Setup Instructions
 
-   Environment variables:
+Clone the Repository:bashgit clone https://github.com/your-username/medical-transcript-summarizer.git
+cd medical-transcript-summarizer
+Install Dependencies:bashpip install -r requirements.txt
+Download Model and Tokenizer:
+Place model.pt (trained model weights) and tokenizer.json (WordPiece tokenizer) in the project directory: C:\Users\shris\Documents\College\Study\Fourth Year\Sem 7\DS&ML\Project\.
+Alternatively, train the model yourself (see Training the Model).
 
-   - `SUMMARIZER_MODEL_PATH` – path to `model.pt` (default `artifacts/model.pt`)
-   - `SUMMARIZER_TOKENIZER_PATH` – path to `tokenizer.json`
-   - `SUMMARIZER_MAX_INPUT_LENGTH`, `SUMMARIZER_MAX_OUTPUT_LENGTH` – optional overrides.
-
-2. **Deploy to Render**
-
-   - Create a new *Web Service* from your Git repo.
-   - Runtime: Python 3.11 (or newer).
-   - Build command: `pip install -r backend/requirements.txt`
-   - Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-   - Add environment variables pointing to your model/tokenizer. You can upload artifacts to Render persistent disk or store in an object store (S3, GCS) and download in a startup script.
-
-## Frontend App (Vercel)
-
-1. **Local development**
-
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
-
-   Configure a `.env.local`:
-
-   ```
-   NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
-   ```
-
-2. **Deploy to Vercel**
-
-   - Push the repo to GitHub and import into Vercel.
-   - Set `NEXT_PUBLIC_API_BASE_URL` to the public Render URL (e.g. `https://your-render-app.onrender.com`).
-   - Trigger the build; Vercel runs `npm install` then `npm run build`.
-
-## End-to-End Flow
-
-1. Train the model locally using `ml_model.train`.
-2. Upload `artifacts/model.pt` and `artifacts/tokenizer.json` to your Render backend (either via persistent disk or remote storage download step).
-3. Deploy the backend; verify `GET /healthz`.
-4. Deploy the frontend with `NEXT_PUBLIC_API_BASE_URL` pointed at the Render backend URL.
-5. Visit the Vercel URL, paste medical text, and generate summaries.
-
-## Testing Locally
-
-Run the test script to verify your setup:
-
-```bash
-python test_local.py
-```
-
-This checks:
-- All required packages are installed
-- Model artifacts exist
-- ml_model package can be imported
-- Backend can be imported
-
-## Deployment
-
-See **[DEPLOYMENT.md](DEPLOYMENT.md)** for complete instructions on:
-- Testing locally (backend + frontend)
-- Deploying backend to Render
-- Deploying frontend to Vercel
-- Troubleshooting common issues
-
-Or use **[QUICK_START.md](QUICK_START.md)** for a condensed guide.
-
-## Next Steps
-
-- Add authentication & rate limiting for public usage.
-- Implement streaming responses or progress indicators.
-- Replace notebook prototyping with unit/integration tests (PyTest, Playwright).
+Prepare Dataset:
+Place mtsamples.csv in the project directory or a Google Drive folder (for training in Colab).
 
 
+Usage
+Running the Streamlit App
+
+Navigate to the project directory:bashcd C:\Users\shris\Documents\College\Study\Fourth Year\Sem 7\DS&ML\Project
+Run the Streamlit app with file watcher disabled (to avoid Windows-specific issues):bashstreamlit run app.py --server.fileWatcherType none
+Open the app in your browser at http://localhost:8501.
+
+Using the App
+
+Input Transcript:
+Paste or type a medical transcript into the text area.
+The word count is displayed below the input.
+
+Generate Summary:
+Click "Generate Summary" to produce a summary.
+A spinner indicates processing, and the summary appears in the output text area.
+
+Other Actions:
+Clear: Resets the input and output fields.
+Copy Summary: Copies the summary to the clipboard.
+Download Summary: Downloads the summary as summary.txt.
+
+
+Example
+Input Transcript:
+textHISTORY OF PRESENT ILLNESS: The patient presents today for followup. No dysuria, gross hematuria, fever, chills. She continues to have urinary incontinence, especially while changing from sitting to standing position, as well as urge incontinence...
+Output Summary:
+textPatient reports urinary incontinence and vaginal protrusion, concerned about prolapse. No dysuria, hematuria, or fever. Impression notes improved urine retention post-vaginal reconstruction and possible prolapse. Plan includes continuing Flomax, reducing Urecholine, pelvic exam, and CT scan for abdominal distention.
+Training the Model
+To train the Transformer model from scratch:
+
+Setup in Google Colab:
+Mount Google Drive:pythonfrom google.colab import drive
+drive.mount('/content/drive')
+Install dependencies:bash!pip install pandas torch tokenizers rouge-score
+
+Prepare Dataset:
+Place mtsamples.csv in /content/drive/MyDrive/Transformer/.
+
+Run Training Script:
+Use the training notebook (train.ipynb) or copy the training code from the project repository.
+Key parameters:
+Epochs: 100
+Batch Size: 4
+Learning Rate: 0.0001 (with cosine annealing)
+Input Length: 512 tokens
+Output Length: 128 tokens
+
+The script saves model.pt and tokenizer.json to /content/drive/MyDrive/Transformer/.
+
+Download Files:pythonfrom google.colab import files
+files.download('/content/drive/MyDrive/Transformer/model.pt')
+files.download('/content/drive/MyDrive/Transformer/tokenizer.json')
+Move Files:
+Place model.pt and tokenizer.json in the project directory on your local machine.
+
+
+Project Structure
+textmedical-transcript-summarizer/
+├── app.py                  # Streamlit application
+├── train.ipynb             # Training notebook for the Transformer model
+├── mtsamples.csv           # Dataset (not included in repo, must be sourced)
+├── model.pt                # Trained model weights
+├── tokenizer.json          # WordPiece tokenizer
+├── requirements.txt        # Python dependencies
+├── README.md               # This file
+Troubleshooting
+
+Slow Summary Generation:
+Ensure GPU is enabled (torch.cuda.is_available() should return True).
+Reduce max_length in app.py (e.g., from 128 to 64) for faster inference.
+Re-train with a smaller model (d_model=256, 3 layers) if CPU-bound.
+
+Model Loading Error:
+Verify model.pt matches the TransformerModel architecture (d_model=512, 6 layers).
+Check file paths:pythonimport os
+print(os.path.exists("C:\\Users\\shris\\Documents\\College\\Study\\Fourth Year\\Sem 7\\DS&ML\\Project\\model.pt"))
+
+Streamlit Errors:
+Update Streamlit: pip install --upgrade streamlit.
+Run with --server.fileWatcherType none to avoid Windows file watcher issues.
+
+Incoherent Summaries:
+Ensure model.pt is trained with 100 epochs and [SEP] tokens in summaries.
+Revert to beam search (beam_size=2) in app.py for better quality:pythondef generate_summary(text, max_length=128, beam_size=2, temperature=0.8):
+
+
+Future Improvements
+
+Beam Search: Re-enable beam search with optimized parameters for better summary quality.
+Model Compression: Apply quantization or pruning to reduce model size and speed up inference.
+Summary History: Store previous summaries in session_state for user reference.
+PDF Export: Add support for downloading summaries as PDF files.
+Dark Mode: Implement a dark theme for the Streamlit app.
+Cloud Deployment: Deploy the app to Streamlit Community Cloud or Render for public access.
+
+License
+This project is licensed under the MIT License. See the LICENSE file for details.
+Acknowledgments
+
+Dataset: MTSamples for providing medical transcript data.
+Libraries: PyTorch, Streamlit, Hugging Face Tokenizers, and rouge-score.
+Guidance: Course instructors and peers at [Your University] for feedback and support.
