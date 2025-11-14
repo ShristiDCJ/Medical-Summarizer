@@ -1,23 +1,23 @@
 # Transformer Summarizer Project
-Python
-Streamlit
-PyTorch
-License
+- Python
+- Streamlit
+- PyTorch
+- License
 A web-based application built with Streamlit and PyTorch to generate concise summaries of medical transcripts using a custom-trained Transformer model. This project was developed as part of a Data Science and Machine Learning course to demonstrate natural language processing (NLP) for medical text summarization.
-Table of Contents
 
-Project Overview
-Features
-Dataset
-Model Architecture
-Installation
-Usage
-Training the Model
-Project Structure
-Troubleshooting
-Future Improvements
-License
-Acknowledgments
+Table of Contents
+- Project Overview
+- Features
+- Dataset
+- Model Architecture
+- Installation
+- Usage
+- Training the Model
+- Project Structure
+- Troubleshooting
+- Future Improvements
+- License
+- Acknowledgments
 
 Project Overview
 The Medical Transcript Summarizer is designed to assist healthcare professionals by generating brief, coherent summaries from detailed medical transcripts. The application uses a custom Transformer model trained from scratch to process medical text and produce summaries. The model is trained on the MTSamples dataset, and the web interface is built using Streamlit for ease of use.
